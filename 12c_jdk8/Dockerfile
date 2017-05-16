@@ -1,33 +1,43 @@
-FROM oraclelinux:7-slim
+FROM oraclelinux:7.3
 
-#install dependencies and make directories
-# middleware - jdev install destination
-# adf - code mount destination
-RUN mkdir -p /usr/oracle/middleware/ && \
-	mkdir -p /usr/oracle/adf/ && \
-	yum -y install java-1.8.0-openjdk-devel glibc.i686 unzip && \
-	yum clean all && rm -rf /var/cache/yum/*
+MAINTAINER "Subodh Hatkar" <subodh.hatkar@accenture.com>
 
+RUN mkdir -p /usr/oracle/middleware \
+    /usr/oracle/adf \
+    /usr/java \
+    /usr/apache
+        
 WORKDIR /usr/oracle/middleware/
 
-# add silent install file, junit extension and jdev binary
-# TODO figure out the silent install for 12c
-COPY jdev_suite_122120_linux64.bin .
-COPY silent.xml .
+COPY jdk-8u131-linux-x64.tar.gz \
+     apache-maven-3.5.0-bin.tar.gz \
+     jdev_suite_122120.jar \
+     jdev_suite_1221202.jar \
+     jDevResponseFile \
+     oraInst.loc ./ 
 
-ENV JAVA_HOME /usr/lib/jvm/java-openjdk
+
+ENV JAVA_HOME /usr/java/jdk1.8.0_131/jre
 ENV MW_HOME /usr/oracle/middleware
+ENV M2_HOME /usr/apache/apache-maven-3.5.0
+ENV ORACLE_HOME /usr/oracle/middleware/oracle_home
+ENV PATH $PATH:$M2_HOME/bin:$JAVA_HOME/bin:$ORACLE_HOME/bin
 
-# make the jdev binary executable, 
-# do silent install
-# TODO figure out the silent install for 12c
+# putting it all in one run to shave 2GB of the intermediate layers
+# 1. untar the jdk and maven archives
+# 2. create the oracle user
+# 3. install the jdeveloper in ilent mode
+# 4. cleanup
 
-RUN chmod 744 jdevstudio11117install.bin && \
-	./jdevstudio11117install.bin -mode=silent -log=install.log -silent_xml=/usr/oracle/middleware/silent.xml && \
-	rm -f jdevstudio11117install.bin && \
-	rm -f silent.xml 
-
-
-
-
-
+RUN tar -xvf ./jdk-8u131-linux-x64.tar.gz -C /usr/java && \ 
+    tar -xvf ./apache-maven-3.5.0-bin.tar.gz -C /usr/apache && \
+	useradd oracle && \
+    chown -R oracle:oracle /usr/oracle && \
+    su oracle -c "java -jar jdev_suite_122120.jar \
+    -silent -responseFile /usr/oracle/middleware/jDevResponseFile \
+    -invPtrLoc /usr/oracle/middleware/oraInst.loc" && \
+    rm -rf jdev_suite_122120.jar \
+	jdev_suite_1221202.jar \
+    jdk-8u131-linux-x64.tar.gz \
+    apache-maven-3.5.0-bin.tar.gz \
+    jDevResponseFile oraInst.loc
