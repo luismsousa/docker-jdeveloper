@@ -34,7 +34,7 @@ RUN tar -xvf ./jdk-8u131-linux-x64.tar.gz -C /usr/java && \
     su oracle -c "java -jar jdev_suite_122100.jar \
     -silent -responseFile /usr/oracle/middleware/jDevResponseFile \
     -invPtrLoc /usr/oracle/middleware/oraInst.loc" && \
-    rm -rf jdev_suite_1221202.jar \
+    rm -rf jdev_suite_122100.jar \
     jdk-8u131-linux-x64.tar.gz \
     apache-maven-3.5.0-bin.tar.gz \
     jDevResponseFile oraInst.loc
